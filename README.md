@@ -1,0 +1,2 @@
+# AutomationBIHosting
+AutomationProject
