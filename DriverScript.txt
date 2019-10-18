@@ -1,0 +1,97 @@
+Dim intScrCnt
+
+intScrCnt=7
+	arrExeReq=getXLSParamValues(strDataPath,constSeqSheetNum,"Execution_Reqd")
+	' modified for batch exeution of scripts
+	arrExestatus=getXLSParamValues(strDataPath,constSeqSheetNum,"Execution_Status")
+	arrExeLANID=getXLSParamValues(strDataPath,constSeqSheetNum,"LANID")
+	arrTestCaseID=getXLSParamValues(strDataPath,constSeqSheetNum,"TestCaseID")
+	arrTestScenario=getXLSParamValues(strDataPath,constSeqSheetNum,"TestScenario")
+	arrTestCaseDes=getXLSParamValues(strDataPath,constSeqSheetNum,"TestCaseDes")
+	
+	flag=false ' modified for batch exeution of scripts
+	For intExeCnt=1 to ubound(arrExeReq)
+		intRecordNo=intExeCnt
+
+		strUserName=Environment("UserName")
+				
+				If arrExeReq(intExeCnt)="Y" and Ucase(strUserName)=arrExeLANID(intExeCnt) and flag=false and arrExestatus(intExeCnt)="" Then
+
+							flag=true
+							strTCID=getXLSheetSceanrioName(strDataPath,constSeqSheetNum,intExeCnt)
+							Call getXLSheetDetails(strDataPath,constTDSheetNum,intExeCnt)
+							Call SetParameterUtils()
+
+							LoadFunctionLibrary strFloatingPath&"ParameterUtils.txt"
+							
+							strScriptName = Environment.value("ActionName") 
+							fnOpenHtmlFile(strScriptName)
+							
+							Call getXLSheetDetails(strDataPath,constSeqSheetNum,intExeCnt)
+							 strSCID=GetCellValue(intExeCnt,intScrCnt,1)
+
+								If  strSCID = ""Then
+									intCnt= intScrCnt+1
+								Else
+		
+										For intClmCnt=intScrCnt+1  to ubound(arrXLSData,2)
+												If  strSCID = arrXLSData (0,intClmCnt)Then
+													intCnt=intClmCnt+1
+													Exit For
+												End If
+										Next
+			
+								End If
+							
+							For intActionCnt=intCnt to ubound(arrXLSData,2)
+								If arrXLSData(1,intActionCnt)<>"" Then
+								ActionCount=ActionCount+1
+								End if
+							Next
+							
+							For intSeqCnt=intCnt to ubound(arrXLSData,2)
+								If arrXLSData(1,intSeqCnt)<>"" Then
+			
+ 										LoadAndRunAction strTestPath&arrXLSData(1,intSeqCnt),arrXLSData(1,intSeqCnt),oneIteration,strOutPutValue
+	
+				 					If strOutPutValue = "Abort" Then
+										Call fnPassFailCountComponent(ActionCount)
+											Exit For
+										ElseIf strOutPutValue = "Stop" Then
+											Call fnPassFailCountComponent(ActionCount)
+											Call SetXLSCellValue(strDataPath,constSeqSheetNum,intScrCnt,arrXLSData(0,intSeqCnt))
+											Exit For
+									  Else
+	
+									   Call SetXLSCellValue(strDataPath,constSeqSheetNum,intScrCnt,arrXLSData(0,intSeqCnt))
+	
+									End if
+							Else 
+    								Exit For
+    						End If
+						
+							Call fnPassFailCountComponent(ActionCount)
+						Next
+	                         Call EndReport()
+				End If
+	
+	Next
+
+'**********************************************************************************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
